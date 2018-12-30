@@ -59,6 +59,7 @@ namespace CameraUploader
                     Password = System.Configuration.ConfigurationManager.AppSettings["campassword" + i],
                     Filename = System.Configuration.ConfigurationManager.AppSettings["camfilename" + i],
                     Name = System.Configuration.ConfigurationManager.AppSettings["camname" + i],
+                    Backup = System.Configuration.ConfigurationManager.AppSettings["cambackup" + i] == "1" || bool.Parse(System.Configuration.ConfigurationManager.AppSettings["cambackup" + i]),
                     Type = 1,
                 });
             }
@@ -102,7 +103,7 @@ namespace CameraUploader
             foreach (var ci in cameras)
             {
                 WriteLog(ci.Name);
-                var result = GetAndUploadImage(ci.Address, ci.Type, ci.Username, ci.Password, ci.Filename, ci.Name);
+                var result = GetAndUploadImage(ci.Address, ci.Type, ci.Username, ci.Password, ci.Filename, ci.Name, ci.Backup);
             }
 
             runs++;
@@ -113,7 +114,7 @@ namespace CameraUploader
             notifyIcon1.Text = label1.Text;
         }
 
-        private bool GetAndUploadImage(string address, int type, string camusername, string campwd, string destFileName, string name)
+        private bool GetAndUploadImage(string address, int type, string camusername, string campwd, string destFileName, string name, bool backup)
         {
             try
             {
@@ -129,6 +130,12 @@ namespace CameraUploader
                     client.Credentials = new NetworkCredential(ftpusername, ftppassword);
                     client.UploadFile(ftpaddress + destFileName, WebRequestMethods.Ftp.UploadFile, destFileName);
                 }
+
+                if (backup)
+                {
+                    System.IO.File.Copy(destFileName, destFileName.Replace(".", "_" + DateTime.Now.ToString("yyyyMMddHHmmss") + "."));
+                }
+
                 return true;
             }
             catch (Exception exc)
@@ -154,5 +161,6 @@ namespace CameraUploader
         public string Filename { get; set; }
         public string Name { get; set; }
         public int Type { get; set; }
+        public bool Backup { get; set; }
     }
 }
