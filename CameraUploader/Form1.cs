@@ -52,7 +52,7 @@ namespace CameraUploader
             cameras = new List<CameraInfo>();
             for (int i = 1; i <= noOfCameras; i++)
             {
-                cameras.Add(new CameraInfo()
+                var ci = new CameraInfo()
                 {
                     Address = System.Configuration.ConfigurationManager.AppSettings["camaddress" + i],
                     Username = System.Configuration.ConfigurationManager.AppSettings["camusername" + i],
@@ -60,8 +60,16 @@ namespace CameraUploader
                     Filename = System.Configuration.ConfigurationManager.AppSettings["camfilename" + i],
                     Name = System.Configuration.ConfigurationManager.AppSettings["camname" + i],
                     Backup = System.Configuration.ConfigurationManager.AppSettings["cambackup" + i] == "1" || bool.Parse(System.Configuration.ConfigurationManager.AppSettings["cambackup" + i]),
+                    BackupFolder = System.Configuration.ConfigurationManager.AppSettings["cambackupfolder" + i],
                     Type = 1,
-                });
+                };
+                cameras.Add(ci);
+
+                if (!string.IsNullOrWhiteSpace(ci.BackupFolder))
+                {
+                    if(!System.IO.Directory.Exists(ci.BackupFolder))
+                        System.IO.Directory.CreateDirectory(ci.BackupFolder);
+                }
             }
 
             textBox1.Text = "";
@@ -103,7 +111,7 @@ namespace CameraUploader
             foreach (var ci in cameras)
             {
                 WriteLog(ci.Name);
-                var result = GetAndUploadImage(ci.Address, ci.Type, ci.Username, ci.Password, ci.Filename, ci.Name, ci.Backup);
+                var result = GetAndUploadImage(ci.Address, ci.Type, ci.Username, ci.Password, ci.Filename, ci.Name, ci.Backup, ci.BackupFolder);
             }
 
             runs++;
@@ -114,7 +122,7 @@ namespace CameraUploader
             notifyIcon1.Text = label1.Text;
         }
 
-        private bool GetAndUploadImage(string address, int type, string camusername, string campwd, string destFileName, string name, bool backup)
+        private bool GetAndUploadImage(string address, int type, string camusername, string campwd, string destFileName, string name, bool backup, string backupFolder)
         {
             try
             {
@@ -133,7 +141,8 @@ namespace CameraUploader
 
                 if (backup)
                 {
-                    System.IO.File.Copy(destFileName, destFileName.Replace(".", "_" + DateTime.Now.ToString("yyyyMMddHHmmss") + "."));
+                    System.IO.File.Copy(destFileName, System.IO.Path.Combine(backupFolder??"", destFileName.Replace(".", "_" + DateTime.Now.ToString("yyyyMMddHHmmss") + ".")));
+                    //ffmpeg -r 24 -i cam%d.jpg -s hd1080 timelapse.mp4
                 }
 
                 return true;
@@ -162,5 +171,6 @@ namespace CameraUploader
         public string Name { get; set; }
         public int Type { get; set; }
         public bool Backup { get; set; }
+        public string BackupFolder { get; set; }
     }
 }
