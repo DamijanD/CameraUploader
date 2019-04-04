@@ -142,7 +142,7 @@ namespace CameraUploader
                 if (backup)
                 {
                     System.IO.File.Copy(destFileName, System.IO.Path.Combine(backupFolder??"", destFileName.Replace(".", "_" + DateTime.Now.ToString("yyyyMMddHHmmss") + ".")));
-                    //ffmpeg -r 24 -i cam%d.jpg -s hd1080 timelapse.mp4
+                    //ffmpeg -r 24 -i cam%d.jpg -s hd1080 timelapse.mp4 
                 }
 
                 return true;
