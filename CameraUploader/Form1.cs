@@ -128,6 +128,8 @@ namespace CameraUploader
             {
                 string url = string.Format("http://{0}/cgi-bin/CGIProxy.fcgi?cmd=snapPicture2&usr={1}&pwd={2}", address, camusername, campwd);
 
+//Hilook B150H-M
+            //http://xx.xx.xx.xx:88/ISAPI/Streaming/channels/101/picture?videoResolutionWidth=1920&videoResolutionHeight=1080
                 using (WebClient client = new WebClient())
                 {
                     client.DownloadFile(url, destFileName);
