@@ -61,7 +61,7 @@ namespace CameraUploader
                     Name = System.Configuration.ConfigurationManager.AppSettings["camname" + i],
                     Backup = System.Configuration.ConfigurationManager.AppSettings["cambackup" + i] == "1" || bool.Parse(System.Configuration.ConfigurationManager.AppSettings["cambackup" + i]),
                     BackupFolder = System.Configuration.ConfigurationManager.AppSettings["cambackupfolder" + i],
-                    Type = 1,
+                    Type = int.Parse(System.Configuration.ConfigurationManager.AppSettings["camtype" + i]),
                 };
                 cameras.Add(ci);
 
@@ -122,16 +122,36 @@ namespace CameraUploader
             notifyIcon1.Text = label1.Text;
         }
 
+        private string GetCameraUrl(int type, string address, string camusername, string campwd)
+        {
+            switch (type)
+            {
+                case 1:
+                    {
+                        //Foscam
+                        return string.Format("http://{0}/cgi-bin/CGIProxy.fcgi?cmd=snapPicture2&usr={1}&pwd={2}", address, camusername, campwd);
+                    }
+                case 2:
+                    {
+                        //Hilook B150H-M
+                        return $"http://{address}//ISAPI/Streaming/channels/101/picture?videoResolutionWidth=1920&videoResolutionHeight=1080";
+                    }
+                default: return "";
+            }
+        }
+
         private bool GetAndUploadImage(string address, int type, string camusername, string campwd, string destFileName, string name, bool backup, string backupFolder)
         {
             try
             {
-                string url = string.Format("http://{0}/cgi-bin/CGIProxy.fcgi?cmd=snapPicture2&usr={1}&pwd={2}", address, camusername, campwd);
-
-//Hilook B150H-M
-            //http://xx.xx.xx.xx:88/ISAPI/Streaming/channels/101/picture?videoResolutionWidth=1920&videoResolutionHeight=1080
+                string url = GetCameraUrl(type, address, camusername, campwd);
+              
                 using (WebClient client = new WebClient())
                 {
+                    if (type == 2)
+                    {
+                        client.Credentials = new NetworkCredential(camusername, campwd);
+                    }
                     client.DownloadFile(url, destFileName);
                 }
 
