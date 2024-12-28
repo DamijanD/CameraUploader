@@ -22,7 +22,9 @@ namespace CameraUploader
         string ftpusername;
         string ftppassword;
         string ftpaddress;
+        string ftpaddressext;
         List<CameraInfo> cameras;
+        List<string> exturls;
         int runs = 0;
 
         private void Form1_Load(object sender, EventArgs e)
@@ -74,6 +76,9 @@ namespace CameraUploader
 
             textBox1.Text = "";
             WriteLog("Number of cameras: " + cameras.Count());
+
+            exturls = System.Configuration.ConfigurationManager.AppSettings["extcamurls"].Split(";".ToCharArray(), StringSplitOptions.RemoveEmptyEntries).ToList();
+            ftpaddressext = System.Configuration.ConfigurationManager.AppSettings["ftpaddressext"];
         }
 
         private void btnSend_Click(object sender, EventArgs e)
@@ -112,6 +117,12 @@ namespace CameraUploader
             {
                 WriteLog(ci.Name);
                 var result = GetAndUploadImage(ci.Address, ci.Type, ci.Username, ci.Password, ci.Filename, ci.Name, ci.Backup, ci.BackupFolder);
+            }
+
+            foreach (var url in exturls)
+            {
+                WriteLog(url);
+                var result = GetAndUploadImageExt(url);
             }
 
             runs++;
@@ -172,6 +183,32 @@ namespace CameraUploader
             catch (Exception exc)
             {
                 WriteLog("Error:" + name + ":" + exc.Message);
+                return false;
+            }
+        }
+
+        private bool GetAndUploadImageExt(string url)
+        {
+            try
+            {
+                string destFileName = url.Substring(url.LastIndexOf("/") + 1);
+
+                using (WebClient client = new WebClient())
+                {
+                    client.DownloadFile(url, destFileName);
+                }
+
+                using (WebClient client = new WebClient())
+                {
+                    client.Credentials = new NetworkCredential(ftpusername, ftppassword);
+                    client.UploadFile(ftpaddressext + destFileName, WebRequestMethods.Ftp.UploadFile, destFileName);
+                }
+
+                return true;
+            }
+            catch (Exception exc)
+            {
+                WriteLog("Error:" + url + ":" + exc.Message);
                 return false;
             }
         }
